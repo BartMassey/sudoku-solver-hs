@@ -3,7 +3,8 @@
 -- Sudoku Solver in Haskell
 import Data.Char
 import qualified Data.Map.Strict as M
-import Data.List hiding ((\\))
+import Data.Map.Strict ((!))
+import Data.List hiding ((\\), (!))
 import Data.Ord
 import qualified Data.Set as S
 import Data.Set ((\\))
@@ -92,8 +93,18 @@ solve openings board =
                 where
                   board' = M.insert coord v board
 
+gridString :: Board -> String
+gridString board =
+    unlines $ do
+      row <- [0..8]
+      return $ do
+        col <- [0..8]
+        return $ intToDigit $ board ! (row, col)
+
 main :: IO ()
 main = do
   boardString <- getContents
   let board = readGrid boardString
-  print $ solve (availableOpenings board) board
+  case solve (availableOpenings board) board of
+    Just b -> putStr $ gridString b
+    Nothing -> putStrLn "no solution"
