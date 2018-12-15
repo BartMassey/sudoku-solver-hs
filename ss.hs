@@ -2,12 +2,12 @@
 
 -- Sudoku Solver in Haskell
 import Data.Char
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Data.List hiding ((\\))
+import Data.Ord
 import qualified Data.Set as S
 import Data.Set ((\\))
 import System.IO
-
 
 type Coord = (Int, Int)
 type Value = Int
@@ -22,8 +22,10 @@ readGrid boardString =
     makeValue (c, v) = (c, digitToInt v)
 
 values :: (Coord -> Bool) -> Board -> S.Set Value
-values f board = S.fromList $ map snd $ M.toList $
-                 M.filterWithKey (\c _ -> f c) board
+values f board =
+    S.fromList $
+    M.elems $
+    M.filterWithKey (\c _ -> f c) board
 
 rowValues :: Coord -> Board -> S.Set Value
 rowValues (r, _) = values (\(r', _) -> r' == r)
@@ -55,12 +57,43 @@ openValues coord board =
       c = colValues coord board
       b = boxValues coord board
 
+type Openings = M.Map Coord (S.Set Value)
+
+availableOpenings :: Board -> Openings
+availableOpenings board =
+    M.fromAscList $
+    map (\c -> (c, openValues c board)) $
+    S.toAscList $
+    openCoords board
+
+solve :: Openings -> Board -> Maybe Board
+solve openings board | M.null openings = Just board
+solve openings board =
+    tryCells values
+    where
+      (coord, values) = (cMin, S.toAscList vsMin)
+          where
+            (cMin, vsMin) =
+                minimumBy (comparing width) $ M.assocs openings
+                where
+                  width (c, vs) = (S.size vs, S.toAscList vs, c)
+      open = openValues coord board
+      tryCells [] = Nothing
+      tryCells (v : vs) =
+          case solve openings' board' of
+            Nothing -> tryCells vs
+            soln -> soln
+          where
+            (openings', board') =
+                case S.size open of
+                  0 -> error "solve: internal error: empty values"
+                  1 -> (M.delete coord openings, board')
+                  _ -> (M.adjust (S.delete v) coord openings, board')
+                where
+                  board' = M.insert coord v board
+
 main :: IO ()
 main = do
   boardString <- getContents
   let board = readGrid boardString
-  let c = (3, 4)
-  print $ rowValues c board
-  print $ colValues c board
-  print $ boxValues c board
-  print $ openValues c board
+  print $ solve (availableOpenings board) board
