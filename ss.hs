@@ -3,8 +3,9 @@
 -- Sudoku Solver in Haskell
 import Data.Char
 import qualified Data.Map as M
-import Data.List
+import Data.List hiding ((\\))
 import qualified Data.Set as S
+import Data.Set ((\\))
 import System.IO
 
 
@@ -41,14 +42,25 @@ boxCoords :: S.Set Coord
 boxCoords = S.fromList $ [(r, c) | r <- [0..8], c <- [0..8]]
 
 openCoords :: Board -> S.Set Coord
-openCoords board = boxCoords S.\\ M.keysSet board
+openCoords board = boxCoords \\ M.keysSet board
+
+allValues :: S.Set Value
+allValues = S.fromList [1..9]
+            
+openValues :: Coord -> Board -> S.Set Value
+openValues coord board =
+    ((allValues \\ r) \\ c) \\ b
+    where
+      r = rowValues coord board
+      c = colValues coord board
+      b = boxValues coord board
 
 main :: IO ()
 main = do
   boardString <- getContents
   let board = readGrid boardString
-  let c = (1, 2)
+  let c = (3, 4)
   print $ rowValues c board
   print $ colValues c board
   print $ boxValues c board
-  print $ openCoords board
+  print $ openValues c board
