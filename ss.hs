@@ -67,24 +67,26 @@ availableOpenings board =
     S.toAscList $
     openCoords board
 
-solve :: Openings -> Board -> Maybe Board
-solve openings board | M.null openings = Just board
-solve openings board =
-    tryCells values
-    where
-      (coord, values) = (cMin, S.toAscList vsMin)
+solve :: Board -> Maybe Board
+solve board =
+    case M.null openings of
+      True -> Just board
+      False ->
+          tryCells $ S.toAscList values
           where
-            (cMin, vsMin) =
-                minimumBy (comparing width) $ M.assocs openings
+            (coord, values) =
+                minimumBy (comparing width) $ M.toAscList openings
                 where
                   width (c, vs) = (S.size vs, S.toAscList vs, c)
-      tryCells [] = Nothing
-      tryCells (v : vs) =
-          case solve (availableOpenings board') board' of
-            Nothing -> tryCells vs
-            soln -> soln
-          where
-            board' = M.insert coord v board
+            tryCells [] = Nothing
+            tryCells (v : vs) =
+                case solve board' of
+                  Nothing -> tryCells vs
+                  soln -> soln
+                where
+                  board' = M.insert coord v board
+    where
+      openings = availableOpenings board
 
 gridString :: Board -> String
 gridString board =
@@ -98,6 +100,6 @@ main :: IO ()
 main = do
   boardString <- getContents
   let board = readGrid boardString
-  case solve (availableOpenings board) board of
+  case solve board of
     Just b -> putStr $ gridString b
     Nothing -> putStrLn "no solution"
