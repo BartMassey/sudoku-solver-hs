@@ -78,20 +78,13 @@ solve openings board =
                 minimumBy (comparing width) $ M.assocs openings
                 where
                   width (c, vs) = (S.size vs, S.toAscList vs, c)
-      open = openValues coord board
       tryCells [] = Nothing
       tryCells (v : vs) =
-          case solve openings' board' of
+          case solve (availableOpenings board') board' of
             Nothing -> tryCells vs
             soln -> soln
           where
-            (openings', board') =
-                case S.size open of
-                  0 -> error "solve: internal error: empty values"
-                  1 -> (M.delete coord openings, board')
-                  _ -> (M.adjust (S.delete v) coord openings, board')
-                where
-                  board' = M.insert coord v board
+            board' = M.insert coord v board
 
 gridString :: Board -> String
 gridString board =
