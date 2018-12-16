@@ -78,7 +78,3 @@ executable sudoku-solver
   
   -- Base language which the package is written in.
   default-language:    Haskell2010
-  
-  -- Support Literate Haskell with Markdown via markdown-unlit
-  -- http://github.com/sol/markdown-unlit
-  ghc-options:         -pgmL markdown-unlit

@@ -1,0 +1,34 @@
+#!/usr/bin/awk -f
+# Copyright © 2018 Bart Massey
+# This work is made available under the "MIT License".
+# Please see the file LICENSE in this distribution for
+# license terms.
+
+# Turn "Bird Tracks" in Literate Haskell into Markdown code
+# blocks.
+
+/^> / {
+    if (nblock == 0)
+       print "```haskell"
+    sub(/^> /, "")
+    block[++nblock] = $0
+    next
+}
+
+{
+    if (nblock > 0) {
+        for (i = 1; i <= nblock; i++)
+            print block[i]
+        print "```"
+    }
+    nblock = 0
+    print $0
+}
+
+END {
+    if (nblock > 0) {
+        for (i = 1; i <= nblock; i++)
+            print block[i]
+        print "```"
+    }
+}
